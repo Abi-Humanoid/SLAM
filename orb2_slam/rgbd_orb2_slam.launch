@@ -1,0 +1,119 @@
+<launch>
+  <!-- <args for urdf/> -->
+    <!-- This doesn't work due to configuration errors with rgb_stereo_node -->
+    <arg name="camera_model"         default="BW1098OAK" /> <!-- 'zed' or 'zedm' -->
+    <arg name="camera_name"          default="oak" />
+
+    <arg name="base_frame"           default="oak-d_frame" />
+
+    <arg name="cam_pos_x"             default="0.0" /> <!-- Position respect to base frame (i.e. "base_link) -->
+    <arg name="cam_pos_y"             default="0.0" /> <!-- Position respect to base frame (i.e. "base_link) -->
+    <arg name="cam_pos_z"             default="0.0" /> <!-- Position respect to base frame (i.e. "base_link) -->
+    <arg name="cam_roll"              default="1.5708" /> <!-- Orientation respect to base frame (i.e. "base_link) -->
+    <arg name="cam_pitch"             default="0.0" /> <!-- Orientation respect to base frame (i.e. "base_link) -->
+    <arg name="cam_yaw"               default="1.5708" /> <!-- Orientation respect to base frame (i.e. "base_link) -->
+
+    <!-- args for stereo node -->
+    <arg name="outputDepth"           default="true" /> 
+    <arg name="outputRectified"       default="true" /> 
+    <arg name="lrcheck"               default="true" /> 
+    <arg name="extended"              default="false" /> 
+    <arg name="subpixel"              default="false" /> 
+    <arg name="camera_param_uri"      default="package://depthai_examples/params/camera" />
+
+ 
+    <include file="$(find depthai_bridge)/launch/urdf.launch">
+        <arg name="base_frame"      value="$(arg  base_frame)"  />
+        <arg name="camera_model"    value="$(arg  camera_model)"/>
+        <arg name="camera_name"     value="$(arg  camera_name)" />
+        <arg name="cam_pos_x"       value="$(arg  cam_pos_x)"   />
+        <arg name="cam_pos_y"       value="$(arg  cam_pos_y)"   />
+        <arg name="cam_pos_z"       value="$(arg  cam_pos_z)"   />
+        <arg name="cam_roll"        value="$(arg  cam_roll)"    />
+        <arg name="cam_pitch"       value="$(arg  cam_pitch)"   />
+        <arg name="cam_yaw"         value="$(arg  cam_yaw)"     />
+    </include>
+
+    <node name="rgb_stereo_publisher" pkg="depthai_examples" type="rgb_stereo_node" output="screen" required="true">
+        <param name="camera_name" value="$(arg camera_name)"/>
+        <param name="camera_param_uri" value="$(arg camera_param_uri)"/>
+        <param name="outputDepth" value="$(arg outputDepth)"/>
+        <param name="outputRectified" value="$(arg outputRectified)"/>
+        <param name="lrcheck" value="$(arg lrcheck)"/>
+        <param name="extended" value="$(arg extended)"/>
+        <param name="subpixel" value="$(arg subpixel)"/>
+    </node> 
+
+    <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
+
+    <node pkg="nodelet" type="nodelet" name="depth_image_convertion_nodelet"
+          args="load depth_image_proc/convert_metric nodelet_manager">
+          <remap from="image_raw" to="/rgb_stereo_publisher/stereo/depth"/>    
+          <remap from="image" to="/rgb_stereo_publisher/stereo/image"/>
+      </node>
+    
+    <node pkg="nodelet" type="nodelet" name="nodelet1"
+          args="load depth_image_proc/register nodelet_manager">
+      <remap from="depth/camera_info" to="/rgb_stereo_publisher/stereo/camera_info"/>
+      <remap from="depth/image_rect" to="/rgb_stereo_publisher/stereo/image"/>
+      <remap from="rgb/camera_info" to="/rgb_stereo_publisher/color/camera_info"/>
+      <param name="interpolation" value="0"/>
+    </node>
+    
+    <node pkg="nodelet" type="nodelet" name="nodelet2"
+          args="load depth_image_proc/point_cloud_xyzrgb nodelet_manager">
+      <remap from="rgb/camera_info" to="/rgb_stereo_publisher/color/camera_info"/>
+      <remap from="rgb/image_rect_color" to="/rgb_stereo_publisher/color/image"/>
+      <remap from="depth/image_rect" to="/depth_registered/image_rect"/>
+      <remap from="depth/camera_info" to="/depth_registered/camera_info"/>
+    </node>
+
+
+  <node name="orb_slam2_rgbd" pkg="orb_slam2_ros"
+      type="orb_slam2_ros_rgbd" output="screen">
+
+       <remap from="/camera/rgb/image_raw" to="/rgb_stereo_publisher/color/image" />
+       <remap from="/camera/depth_registered/image_raw" to="/rgb_stereo_publisher/stereo/depth" />
+        <remap from="camera/rgb/camera_info" to="/rgb_stereo_publisher/color/camera_info" />
+
+
+       <param name="publish_pointcloud" type="bool" value="true" />
+       <param name="publish_pose" type="bool" value="true" />
+       <param name="localize_only" type="bool" value="false" />
+       <param name="reset_map" type="bool" value="false" />
+
+       <!-- static parameters -->
+       <param name="load_map" type="bool" value="false" />
+       <param name="map_file" type="string" value="map.bin" />
+       <param name="voc_file" type="string" value="$(find orb_slam2_ros)/orb_slam2/Vocabulary/ORBvoc.txt" />
+
+       <param name="pointcloud_frame_id" type="string" value="map" />
+       <param name="camera_frame_id" type="string" value="oak-d_frame" />
+       <param name="min_num_kf_in_map" type="int" value="5" />
+
+       <!-- ORB parameters -->
+       <param name="/ORBextractor/nFeatures" type="int" value="1000" />
+       <param name="/ORBextractor/scaleFactor" type="double" value="1.2" />
+       <param name="/ORBextractor/nLevels" type="int" value="8" />
+       <param name="/ORBextractor/iniThFAST" type="int" value="20" />
+       <param name="/ORBextractor/minThFAST" type="int" value="7" />
+
+       <!-- Camera parameters -->
+       <!-- Camera frames per second -->
+       <param name="camera_fps" type="int" value="30" />
+       <!-- Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale) -->
+       <param name="camera_rgb_encoding" type="bool" value="true" />
+       <!-- Close/Far threshold. Baseline times. -->
+       <param name="ThDepth" type="double" value="40.0" />
+       <!-- Deptmap values factor (what pixel value in the depth image corresponds to 1m) -->
+       <param name="depth_map_factor" type="double" value="1.0" />
+
+        <!-- Camera calibration parameters -->
+        <!--If the node should wait for a camera_info topic to take the camera calibration data-->
+       <param name="load_calibration_from_cam" type="bool" value="true" />
+       
+  </node>
+
+  
+
+</launch>

@@ -1,0 +1,109 @@
+<launch>
+  <!-- <args for urdf/> -->
+  <!-- <Taken from depthai-ros-examples> -->
+    <arg name="camera_model"         default="BW1098OAK" /> <!-- 'zed' or 'zedm' -->
+    <arg name="camera_name"          default="oak" />
+    <arg name="mode"                 default="depth" />
+    <arg name="base_frame"           default="oak-d_frame" />
+
+    <arg name="cam_pos_x"             default="0.0" /> <!-- Position respect to base frame (i.e. "base_link) -->
+    <arg name="cam_pos_y"             default="0.0" /> <!-- Position respect to base frame (i.e. "base_link) -->
+    <arg name="cam_pos_z"             default="0.0" /> <!-- Position respect to base frame (i.e. "base_link) -->
+    <arg name="cam_roll"              default="1.5708" /> <!-- Orientation respect to base frame (i.e. "base_link) -->
+    <arg name="cam_pitch"             default="0.0" /> <!-- Orientation respect to base frame (i.e. "base_link) -->
+    <arg name="cam_yaw"               default="1.5708" /> <!-- Orientation respect to base frame (i.e. "base_link) -->
+
+    <arg name="lrcheck"               default="true" /> 
+    <arg name="extended"              default="false" /> 
+    <arg name="subpixel"              default="false" />
+    <arg name="camera_param_uri"      default="package://depthai_examples/params/camera" />
+
+   <!-- <Load camera configuration> -->
+    <include file="$(find depthai_bridge)/launch/urdf.launch">
+        <arg name="base_frame"      value="$(arg  base_frame)"  />
+        <arg name="camera_model"    value="$(arg  camera_model)"/>
+        <arg name="camera_name"     value="$(arg  camera_name)" />
+        <arg name="cam_pos_x"       value="$(arg  cam_pos_x)"   />
+        <arg name="cam_pos_y"       value="$(arg  cam_pos_y)"   />
+        <arg name="cam_pos_z"       value="$(arg  cam_pos_z)"   />
+        <arg name="cam_roll"        value="$(arg  cam_roll)"    />
+        <arg name="cam_pitch"       value="$(arg  cam_pitch)"   />
+        <arg name="cam_yaw"         value="$(arg  cam_yaw)"     />
+    </include>
+
+    <!-- launch-prefix="xterm -e gdb (add [- - args] without space) -->
+    <node name="stereo_publisher" pkg="depthai_examples" type="stereo_node" output="screen" required="true">
+        <param name="camera_name" value="$(arg camera_name)"/>
+        <param name="camera_param_uri" value="$(arg camera_param_uri)"/>
+        <param name="mode" value="$(arg mode)"/>
+        <param name="lrcheck" value="$(arg lrcheck)"/>
+        <param name="extended" value="$(arg extended)"/>
+        <param name="subpixel" value="$(arg subpixel)"/>
+    </node> 
+
+  <!-- SLAM ROS node. Set tf of object and other params -->
+  <node name="slam" pkg="orb_slam2_ros"
+      type="orb_slam2_ros_stereo" output="screen">
+
+
+      <!-- Camera topics to listen on -->
+      <remap from="image_left/image_color_rect" to="/stereo_publisher/left/image" />
+      <remap from="image_right/image_color_rect" to="/stereo_publisher/right/image" />
+      <remap from="image_left/camera_info" to="/stereo_publisher/left/camera_info" />
+      
+
+      <!-- Settings -->
+      <param name="publish_pointcloud" type="bool" value="false" />
+      <param name="publish_pose" type="bool" value="true" />
+      <param name="localize_only" type="bool" value="false" />
+      <param name="reset_map" type="bool" value="false" />
+
+      <!-- Static parameters -->
+      <param name="load_map" type="bool" value="false" />
+      <param name="map_file" type="string" value="map.bin" />
+      <param name="voc_file" type="string" value="$(find orb_slam2_ros)/orb_slam2/Vocabulary/ORBvoc.txt" />
+
+      <!-- Frames -->
+      <param name="pointcloud_frame_id" type="string" value="map" />
+      <param name="camera_frame_id" type="string" value="oak-d_frame" />
+
+      
+
+      <!-- Settings -->
+      <param name="min_num_kf_in_map" type="int" value="5" />
+
+      <!-- ORB parameters -->
+      <param name="/ORBextractor/nFeatures" type="int" value="1200" />
+      <param name="/ORBextractor/scaleFactor" type="double" value="1.2" />
+      <param name="/ORBextractor/nLevels" type="int" value="8" />
+      <param name="/ORBextractor/iniThFAST" type="int" value="20" />
+      <param name="/ORBextractor/minThFAST" type="int" value="7" />
+
+      <!-- Camera parameters -->
+      <!-- Camera frames per second -->
+      <param name="camera_fps" type="int" value="30" />
+
+      <!-- Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale) -->
+      <param name="camera_rgb_encoding" type="bool" value="true" />
+      
+      <!-- Close/Far threshold. Baseline times. -->
+      <param name="ThDepth" type="double" value="40" />
+      
+      <!-- Depthmap values factor (what pixel value in the depth image corresponds to 1m) -->
+      <param name="depth_map_factor" type="double" value="1.0" />
+
+      <!-- Camera calibration parameters -->
+      <!-- If the node should wait for a camera_info topic to take the camera calibration data -->
+      <param name="load_calibration_from_cam" type="bool" value="true" />
+  </node>
+
+  <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
+
+  <!-- Point Cloud, gets changed by SLAM node somehow  -->
+  <node pkg="nodelet" type="nodelet" name="nodelet1"
+        args="load depth_image_proc/point_cloud_xyz nodelet_manager">
+    <remap from="camera_info" to="/stereo_publisher/stereo/camera_info"/>
+    <remap from="image_rect" to="/stereo_publisher/stereo/depth"/>
+    <remap from="points" to="/slam/map_points"/>
+  </node>
+</launch>
