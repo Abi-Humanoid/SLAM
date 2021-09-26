@@ -1,5 +1,6 @@
 # SLAM
 
+## Dependencies ##
 For the OAK-D camera to work a number of packages are required. 
 
 These can be done by following the steps outlined in https://github.com/luxonis/depthai-ros
@@ -13,6 +14,17 @@ rtabmap_ros also needs to be installed:
 
 ```
 sudo apt-get install ros-melodic-rtabmap-ros
+```
+
+---
+## Installation ##
+This repository contains the catkin workspace src directory.
+To install:
+```
+mkdir slam_ws/          #Create your target catkin workspace
+git clone https://github.com/Abi-Humanoid/SLAM.git src        #Create a src folder containing this repo
+catkin_make 
+source devel/setup.bash         #Add to path
 ```
 
 ---
