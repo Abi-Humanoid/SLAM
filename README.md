@@ -6,16 +6,6 @@ For the OAK-D camera to work a number of packages are required.
 These can be done by following the steps outlined in https://github.com/luxonis/depthai-ros
 This installs the depthai-core library, as well as the ros package for depthai.
 
-Next orb_slam2_ros needs to be installed:
-```
-sudo apt-get install ros-melodic-orb-slam2-ros
-```
-rtabmap_ros also needs to be installed:
-
-```
-sudo apt-get install ros-melodic-rtabmap-ros
-```
-
 ---
 ## Installation ##
 This repository contains the catkin workspace src directory.
@@ -26,6 +16,22 @@ git clone https://github.com/Abi-Humanoid/SLAM.git src        #Create a src fold
 catkin_make 
 source devel/setup.bash         #Add to path
 ```
+
+Next orb_slam2_ros needs to be installed:
+```
+cd src
+git clone https://github.com/appliedAI-Initiative/orb_slam_2_ros.git
+cd ..
+catkin_make
+source devel/setup.bash
+```
+rtabmap_ros also needs to be installed:
+
+```
+sudo apt-get install ros-melodic-rtabmap-ros
+```
+
+
 
 ---
 The ```orb2_slam/stereo_orb2_slam.launch``` is the only launch file that currently works.
