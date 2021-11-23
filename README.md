@@ -6,6 +6,8 @@ For the OAK-D camera to work a number of packages are required.
 These can be done by following the steps outlined in https://github.com/luxonis/depthai-ros
 This installs the depthai-core library, as well as the ros package for depthai.
 
+Alternatively the first step from https://www.arducam.com/docs/opencv-ai-kit-oak/performing-location-with-visual-slam/ might be better to use first.
+
 ---
 ## Installation ##
 This repository contains the catkin workspace src directory.
