@@ -66,6 +66,11 @@ rtabmap_ros also needs to be installed:
 sudo apt-get install ros-melodic-rtabmap-ros
 ```
 
+Now the depth_image_proc package needs to be installed/updated:
+```
+sudo apt-get install ros-melodic-depth-image-poc
+```
+
 
 
 ---
