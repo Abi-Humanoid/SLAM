@@ -51,7 +51,6 @@ catkin_make
 source devel/setup.bash
 ```
 
-
 Next orb_slam2_ros needs to be installed:
 ```
 cd src
@@ -70,6 +69,10 @@ Now the depth_image_proc package needs to be installed/updated:
 ```
 sudo apt-get install ros-melodic-depth-image-poc
 ```
+
+---
+#Troubleshooting
+If the camera can not be detected with some X_LINK error then refer to the troubleshootin of luxonis https://docs.luxonis.com/en/latest/pages/troubleshooting/ .
 
 
 
