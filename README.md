@@ -60,6 +60,15 @@ catkin_make
 source devel/setup.bash
 ```
 
+Now octomap_server needs to be installed, which is used for the mapping:
+```
+cd src
+sudo apt install ros-melodic-octomap-server
+cd ..
+catkin_make
+source devel/setup.bash
+```
+
 rtabmap_ros also needs to be installed:
 ```
 sudo apt-get install ros-melodic-rtabmap-ros
@@ -78,6 +87,7 @@ If the camera can not be detected with some X_LINK error then refer to the troub
 
 ---
 The ```orb2_slam/stereo_orb2_slam.launch``` is the only launch file that currently works.
+```orb2/slam/octomap_pc.launch``` is a file that produces a map. 
 
 The output of this is a PointCloud2 in the slam/map_points topic.
 When this topic is viewed in rviz the features of the room can be viewed.
