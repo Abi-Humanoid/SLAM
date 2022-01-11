@@ -4,6 +4,8 @@
 
 First install depthai-core as it provides the drivers and other C# packages to allow the OS to communicate with the camera. This can be done in the root directory.
 
+If you get an error due to depthaiConfig it is most likely because this library has not been built as a shared library. Try removing the hunter cache ``` rm -r ~/.hunter ``` and trying again with the below commands. If it fails considering using less cores in make (-j2 or -j1).
+
 ```
 cd ~
 git clone --recursive https://github.com/luxonis/depthai-core.git --branch main
@@ -29,6 +31,7 @@ source devel/setup.bash
 
 The depthai-ros packages can then be installed which acts as a depthai-core wrapper for ROS. This package comes with examples that can easily be used.
 Ensure rosdep is installed and updated, the vcstool is also implemented, and libopencv.
+If this causes the system to crash then try running with less calls (``` catkin_make -j1 ```)
 ```
 # Install OpenCV libraries
 sudo apt install libopencv-dev
