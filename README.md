@@ -50,6 +50,7 @@ wget https://raw.githubusercontent.com/luxonis/depthai-ros/noetic-devel/underlay
 vcs import src < underlay.repos
 rosdep install --from-paths src --ignore-src -r -y
 source /opt/ros/melodic/setup.bash
+# If issue with next step then use sudo ln -s /usr/include/opencv4/opencv2/ /usr/include/opencv as opencv cannot be found on jetson xavier
 catkin_make
 source devel/setup.bash
 ```
