@@ -4,7 +4,7 @@
 
 First install depthai-core as it provides the drivers and other C# packages to allow the OS to communicate with the camera. This can be done in the root directory.
 
-If you get an error due to depthaiConfig it is most likely because this library has not been built as a shared library. Try removing the hunter cache ``` rm -r ~/.hunter ``` and trying again with the below commands. If it fails considering using less cores in make (-j2 or -j1).
+If you get an error due to depthaiConfig it is most likely because this library has not been built as a shared library. Try removing the hunter cache ``` rm -r ~/.hunter ``` and trying again with the below commands. If it fails considering using less cores in make (-j2 or -j1). The depthai-core git repository also has new instructions to make it work.
 
 ```
 cd ~
@@ -16,14 +16,14 @@ make -j4
 sudo make install
 ```
 
-Next create a project directory using catkin_make and cloning this directory which contains the orb_slam2 and rtabmap_ros packages for the OAK-D camera.
+Next create a project directory using catkin_make and cloning this directory which contains launch files that make use of depthai-ros-examples, rtabmap_ros and move_base.
 To create and install:
 ```
 #Create your target catkin workspace
 cd ~
 mkdir slam_ws/          
 # Create a src folder containing this repo
-git clone https://github.com/Abi-Humanoid/SLAM.git src        
+git clone https://github.com/Abi-Humanoid/abi_navigation.git src        
 catkin_make 
 # Add to path
 source devel/setup.bash         
@@ -37,7 +37,7 @@ If this causes the system to crash then try running with less calls (``` catkin_
 sudo apt install libopencv-dev
 
 # Install rosdep package
-sudo apt install python-rosdep2(melodic) or sudo apt install python3-rosdep
+sudo apt install python-rosdep (melodic) or sudo apt install python3-rosdep
 sudo rosdep init
 rosdep update
 
@@ -46,7 +46,7 @@ sudo apt install python3-vcstool
 
 # Install depthai-ros
 cd <directory_for_workspaces> (slam_ws)
-wget https://raw.githubusercontent.com/luxonis/depthai-ros/noetic-devel/underlay.repos
+wget https://raw.githubusercontent.com/luxonis/depthai-ros/main/underlay.repos
 vcs import src < underlay.repos
 rosdep install --from-paths src --ignore-src -r -y
 source /opt/ros/melodic/setup.bash
@@ -55,47 +55,40 @@ catkin_make
 source devel/setup.bash
 ```
 
-Next orb_slam2_ros needs to be installed:
-```
-cd src
-git clone https://github.com/appliedAI-Initiative/orb_slam_2_ros.git
-cd ..
-catkin_make
-source devel/setup.bash
-```
-
-Now octomap_server needs to be installed, which is used for the mapping:
-```
-cd src
-sudo apt install ros-melodic-octomap-server
-cd ..
-catkin_make
-source devel/setup.bash
-```
 
 rtabmap_ros also needs to be installed:
 ```
 sudo apt-get install ros-melodic-rtabmap-ros
 ```
 
-Now the depth_image_proc package needs to be installed/updated:
+move_base also needs to be installed:
 ```
-sudo apt-get install ros-melodic-depth-image-poc
+sudo apt-get install ros-melodic-navigation
 ```
+
+depthimage_to_lasercloud also needs to be installed:
+```
+sudo apt-get install ros-melodic-depthimage-to-laserscan
+```
+
+
 
 ---
 #Troubleshooting
-If the camera can not be detected with some X_LINK error then refer to the troubleshootin of luxonis https://docs.luxonis.com/en/latest/pages/troubleshooting/ .
+If the camera can not be detected with some X_LINK error then refer to the troubleshootin of luxonis https://docs.luxonis.com/en/latest/pages/troubleshooting/ . It's most likely a problem with the USB rules.
 
 
 
 ---
-The ```orb2_slam/stereo_orb2_slam.launch``` is the only launch file that currently works.
-```orb2/slam/octomap_pc.launch``` is a file that produces a map. 
+#Usage
 
-The output of this is a PointCloud2 in the slam/map_points topic.
-When this topic is viewed in rviz the features of the room can be viewed.
+This package has each component seperated into different launch files, but they could potentially be placed into one file.
+To launch the camera and odometry node:
+```
+roslaunch mapping camera.launc
+```
+Next begin by making a scan of the room:
+```
+roslaunch mapping stereo_mapping.launch```
+At this point a ros 
 
-```orb2_slam/rgbd_orb2_slam.launch``` does not work due to the ```depth_image_proc/register``` topic not working properly with the OAK-D's depth image.
-
-Neither of the rtabmap packages have been successfully implemented for reasons outlined in https://github.com/introlab/rtabmap/issues/742 (Updates on this section might suggest rtabmap is possible) 
