@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<launch>
+
+	<!-- This works better using the stereo_node.launch file -->
+    <!-- <args for urdf/> -->
+    <arg name="camera_model"         default="OAK-D"   /> <!-- 'zed' or 'zedm' -->
+    <arg name="camera_name"          default="oak"         />
+    <arg name="mode"                 default="depth"       />
+    <arg name="base_frame"           default="oak-d_frame" />
+    <arg name="parent_frame"         default="base_link" />
+
+    <arg name="cam_pos_x"             default="0.0"        /> <!-- Position respect to base frame (i.e. "base_link) -->
+    <arg name="cam_pos_y"             default="0.0"        /> <!-- Position respect to base frame (i.e. "base_link) -->
+    <arg name="cam_pos_z"             default="0.0"        /> <!-- Position respect to base frame (i.e. "base_link) -->
+    <arg name="cam_roll"              default="0.0"     /> <!-- Orientation respect to base frame (i.e. "base_link) -->
+    <arg name="cam_pitch"             default="0.0"        /> <!-- Orientation respect to base frame (i.e. "base_link) -->
+    <arg name="cam_yaw"               default="0.0"     /> <!-- Orientation respect to base frame (i.e. "base_link) -->
+
+    <arg name="lrcheck"               default="true"       /> 
+    <arg name="extended"              default="false"      /> 
+    <arg name="subpixel"              default="true"       />
+    <arg name="rectify"               default="true"      />
+    <arg name="depth_aligned"         default="false"      />
+     <!-- see https://docs.luxonis.com/projects/api/en/latest/components/nodes/stereo_depth/#currently-configurable-blocks for possible combination of optionf for higher fps-->
+    <arg name="stereo_fps"            default="15"         />
+    <arg name="confidence"            default="200"        />
+    <arg name="LRchecktresh"          default="5"          />
+
+    <include file="$(find depthai_bridge)/launch/urdf.launch">
+        <arg name="base_frame"      value="$(arg  base_frame)"  />
+        <arg name="parent_frame"    value="$(arg  parent_frame)"/>
+        <arg name="camera_model"    value="$(arg  camera_model)"/>
+        <arg name="camera_name"     value="$(arg  camera_name)" />
+        <arg name="cam_pos_x"       value="$(arg  cam_pos_x)"   />
+        <arg name="cam_pos_y"       value="$(arg  cam_pos_y)"   />
+        <arg name="cam_pos_z"       value="$(arg  cam_pos_z)"   />
+        <arg name="cam_roll"        value="$(arg  cam_roll)"    />
+        <arg name="cam_pitch"       value="$(arg  cam_pitch)"   />
+        <arg name="cam_yaw"         value="$(arg  cam_yaw)"     />
+    </include>
+
+    <!-- launch-prefix="xterm -e gdb (add [- - args] without space) -->
+    <node name="stereo_publisher" pkg="depthai_examples" type="stereo_inertial_node" output="screen" required="true">
+
+	<remap from="/stereo_publisher/left/image_rect" to="/stereo_publisher/left/image"/>
+      	<remap from="/stereo_publisher/right/image_rect" to="/stereo_publisher/right/image"/>
+      	<remap from="/stereo_publisher/left/camera_info" to="/stereo_publisher/left/camera_info"/>
+      	<remap from="/stereo_publisher/right/camera_info" to="/stereo_publisher/right/camera_info"/>
+
+        <param name="camera_name" value="$(arg camera_name)"/>
+        <param name="mode" value="$(arg mode)"/>
+        <param name="lrcheck" value="$(arg lrcheck)"/>
+        <param name="extended" value="$(arg extended)"/>
+        <param name="subpixel" value="$(arg subpixel)"/>
+        <param name="rectify" value="$(arg rectify)" />
+        <param name="depth_aligned" value="$(arg depth_aligned)" />
+        <param name="stereo_fps" value="$(arg stereo_fps)" />
+        <param name="confidence" value="$(arg confidence)" />
+        <param name="LRchecktresh" value="$(arg LRchecktresh)" />
+    </node>            
+
+
+	<!-- ODOMETRY NODE -->
+    <node pkg="rtabmap_ros" type="stereo_odometry" name="stereo_odometry" output="screen">
+      	<remap from="left/image_rect"       to="/stereo_publisher/left/image"/>
+      	<remap from="right/image_rect"      to="/stereo_publisher/right/image"/>
+      	<remap from="left/camera_info"      to="/stereo_publisher/left/camera_info"/>
+      	<remap from="right/camera_info"     to="/stereo_publisher/right/camera_info"/>
+     	<remap from="odom"                  to="/odometry"/>
+
+      	<param name="frame_id" type="string" value="base_link"/>
+     	<param name="odom_frame_id" type="string" value="odom"/>
+
+      	<param name="Vis/InlierDistance" type="string" value="0.1"/>
+      	<param name="Vis/MinInliers" type="string" value="10"/>
+      	<param name="Vis/RoiRatios" type="string" value="0.03 0.03 0.04 0.04"/>
+      	<param name="Vis/MaxDepth" type="string" value="10"/>
+      	<param name="approx_sync" type="bool" value="true"/>
+
+     	<param name="Vis/MaxFeatures" type="string" value="500"/>
+      	<param name="GFTT/MinDistance" type="string" value="5"/>
+	</node>
+
+	<!-- TRANSFER FRAMES -->
+	<node pkg="tf" type="static_transform_publisher" name="base_to_oakd"
+	    args="0 0 0 0 0 0 base_link oak-d_frame 100" />  
+
+
+
+</launch>
+
